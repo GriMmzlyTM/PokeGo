@@ -1,0 +1,5 @@
+package pokego
+
+func checkCache() {
+
+}
