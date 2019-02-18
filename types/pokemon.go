@@ -268,7 +268,7 @@ type PokemonShape struct {
 	ID             uint16           `json:"id"`
 	Name           string           `json:"name"`
 	AwesomeNames   []AwesomeName    `json:"awesome_names"`
-	Names          []Name           `json:"name"`
+	Names          []Name           `json:"names"`
 	PokemonSpecies []PokemonSpecies `json:"pokemon_species"`
 }
 
@@ -356,7 +356,7 @@ type MoveStatAffect struct {
 
 type NatureStatAffectSets struct {
 	Increase []NamedAPIResource `json:"increase"`
-	Decrease []NamedAPIResource `json:"increase"`
+	Decrease []NamedAPIResource `json:"decrease"`
 }
 
 //TYPES
