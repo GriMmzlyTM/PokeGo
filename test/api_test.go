@@ -12,7 +12,7 @@ func TestMain(m *testing.M) {
 	ops := pokego.Options{
 		URL:      "https://pokeapi.co/api/v2/",
 		Cache:    true,
-		CacheDir: `C:\Users\Test\go\src\github.com\GriMmzlyTM\pokego\test\testcache\`,
+		CacheDir: `.\testcache\`,
 	}
 
 	pokego.SetOptions(ops)
@@ -40,6 +40,7 @@ func TestMove(t *testing.T) {
 	if move.Accuracy == 0 && move.Name == "" {
 		t.Error("Move not properly set, but no error was thrown")
 	}
+
 }
 
 func TestVersion(t *testing.T) {
@@ -53,5 +54,8 @@ func TestVersion(t *testing.T) {
 }
 
 func TestBerry(t *testing.T) {
+	berry, _ := pokego.GetBerry("hondew")
+
+	t.Log(berry.Name)
 
 }

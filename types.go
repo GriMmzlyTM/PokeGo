@@ -1,13 +1,21 @@
 package pokego
 
+import "fmt"
+
 //COMMON
 
+//API is the core parent struct for all data received from API calls.
 type API struct {
+	ID    uint16 `json:"id"`
+	Name  string `json:"name"`
+	Names []Name `json:"names"`
 }
 
-func (c *API) Get() error {
-
-	return nil
+//IsCached checks if the object name exists anywhere in the cache. Will return true if one or more
+//files exist in the cache with this objects name.
+func (c *API) IsCached() (bool, error) {
+	loc := fmt.Sprintf("%s*/%s*", ops.CacheDir, c.Name)
+	return checkCache(loc)
 }
 
 //APIResource holds "url" which leads to specified data
@@ -94,15 +102,23 @@ type VersionGroupFlavorText struct {
 	VersionGroup NamedAPIResource `json:"version_group"` //The version group which uses this flavor text.
 }
 
+//Language contains language data, generally used to define what language text is in.
 type Language struct {
-	ID       uint16 `json:"id"`
-	Name     string `json:"name"`
+	API
 	Official bool   `json:"official"`
 	ISO639   string `json:"iso639"`
 	ISO3166  string `json:"iso3166"`
-	Names    []Name `json:"names"`
 }
 
+//Get method allowing you to override data within struct. Provide it the name of the data you want to use.
+//For example "pikachu", "hyper-beam", "hondew"
+//This WILL NOT override type. Will only find data of its set type.
+func (c *Language) Get(name string) error {
+	err := callAPI("language/", name, c)
+	return err
+}
+
+//APIResourceList contains node linked list data for anonymouse APIResources
 type APIResourceList struct {
 	Count    uint16        `json:"count"`
 	Next     string        `json:"next"`
@@ -110,6 +126,7 @@ type APIResourceList struct {
 	Result   []APIResource `json:"results"`
 }
 
+//NamedAPIResourceList contains node linked list data for named API resources
 type NamedAPIResourceList struct {
 	Count    uint16             `json:"count"`
 	Next     string             `json:"next"`
@@ -119,9 +136,9 @@ type NamedAPIResourceList struct {
 
 //BERRIES
 
+//Berry contains data for berries within the game. Check Godocs or Pokeapi docs for structure info.
 type Berry struct {
-	ID               uint16           `json:"id"`
-	Name             string           `json:"name"`
+	API
 	GrowthTime       uint8            `json:"growth_time"`
 	MaxHarvest       uint8            `json:"max_harvest"`
 	NaturalGiftPower uint8            `json:"natural_gift_power"`
@@ -134,41 +151,51 @@ type Berry struct {
 	NaturalGiftType  NamedAPIResource `json:"natural_gift_type"`
 }
 
+//Get method allowing you to override data within struct. Provide it the name of the data you want to use.
+//For example "pikachu", "hyper-beam", "hondew"
+//This WILL NOT override type. Will only find data of its set type.
 func (c *Berry) Get(name string) error {
 	err := callAPI("berry/", name, c)
 	return err
 }
 
+//BerryFlavorMap is used by the Berry struct, and contains Potency(uint8) and Flavor (NamedApiResource)-BerryFlavor
 type BerryFlavorMap struct {
 	Potency uint8            `json:"potency"`
 	Flavor  NamedAPIResource `json:"flavor"`
 }
 
+//BerryFirmness contains an array of berries that match the name. This array holds NamedAPIResources to berries.
+//You can use the Name of said NamedAPIResources to get that data. STRUCT TYPE: Berry
 type BerryFirmness struct {
-	ID      uint16             `json:"id"`
-	Name    string             `json:"name"`
+	API
 	Berries []NamedAPIResource `json:"berries"`
-	Names   []Name             `json:"names"`
 }
 
+//Get method allowing you to override data within struct. Provide it the name of the data you want to use.
+//For example "pikachu", "hyper-beam", "hondew"
+//This WILL NOT override type. Will only find data of its set type.
 func (c *BerryFirmness) Get(name string) error {
 	err := callAPI("berry-firmness/", name, c)
 	return err
 }
 
+//BerryFlavor contains a FlavorBerryMap array, and a ContestType NamedApiResource (Call ContestType API using NamedApiResource name)
 type BerryFlavor struct {
-	ID          uint16           `json:"id"`
-	Name        string           `json:"name"`
+	API
 	Berries     []FlavorBerryMap `json:"berries"`
 	ContestType NamedAPIResource `json:"contest_type"`
-	Names       []Name           `json:"names"`
 }
 
+//Get method allowing you to override data within struct. Provide it the name of the data you want to use.
+//For example "pikachu", "hyper-beam", "hondew"
+//This WILL NOT override type. Will only find data of its set type.
 func (c *BerryFlavor) Get(name string) error {
 	err := callAPI("berry-flavor/", name, c)
 	return err
 }
 
+//FlavorBerryMap contains potency and berry (NamedApiResource)
 type FlavorBerryMap struct {
 	Potency uint8            `json:"potency"`
 	Berry   NamedAPIResource `json:"berry"`
@@ -177,10 +204,13 @@ type FlavorBerryMap struct {
 //CONTESTS
 
 type ContestType struct {
-	ID          uint16           `json:"id"`
-	Name        string           `json:"name"`
+	API
 	BerryFlavor NamedAPIResource `json:"berry_flavor"`
-	Names       []ContestName    `json:"names"`
+}
+
+func (c *ContestType) Get(name string) error {
+	err := callAPI("contest-type/", name, c)
+	return err
 }
 
 type ContestName struct {
@@ -197,6 +227,11 @@ type ContestEffect struct {
 	FlavorTextEntries []FlavorText `json:"flavor_text_entries"`
 }
 
+func (c *ContestEffect) Get(name string) error {
+	err := callAPI("contest-effect/", name, c)
+	return err
+}
+
 type SuperContestEffect struct {
 	ID                uint16             `json:"id"`
 	Appeal            uint8              `json:"appeal"`
@@ -204,27 +239,41 @@ type SuperContestEffect struct {
 	Moves             []NamedAPIResource `json:"moves"`
 }
 
+func (c *SuperContestEffect) Get(ID string) error {
+	err := callAPI("super-contest-effect/", ID, c)
+	return err
+}
+
 //ENCOUNTERS
 
 type EncounterMethod struct {
-	ID    uint16 `json:"id"`
-	Name  string `json:"name"`
+	API
 	Order uint16 `json:"order"`
-	Names []Name `json:"names"`
+}
+
+func (c *EncounterMethod) Get(name string) error {
+	err := callAPI("encounter-method/", name, c)
+	return err
 }
 
 type EncounterCondition struct {
-	ID     uint16             `json:"id"`
-	Name   string             `json:"name"`
-	Names  []Name             `json:"names"`
+	API
 	Values []NamedAPIResource `json:"values"`
 }
 
+func (c *Encounter) Get(name string) error {
+	err := callAPI("encounter-condition/", name, c)
+	return err
+}
+
 type EncounterConditionValue struct {
-	ID        uint16             `json:"id"`
-	Name      string             `json:"name"`
+	API
 	Condition []NamedAPIResource `json:"condition"`
-	Names     []Name             `json:"names"`
+}
+
+func (c *EncounterConditionValue) Get(name string) error {
+	err := callAPI("encounter-condition-value/", name, c)
+	return err
 }
 
 //EVOLUTION
@@ -233,6 +282,11 @@ type EvolutionChain struct {
 	ID              uint16           `json:"id"`
 	BabyTriggerItem NamedAPIResource `json:"baby_trigger_item"`
 	Chain           ChainLink        `json:"chain"`
+}
+
+func (c *EvolutionChain) Get(ID string) error {
+	err := callAPI("evolution-chain/", ID, c)
+	return err
 }
 
 type ChainLink struct {
@@ -263,19 +317,20 @@ type EvolutionDetail struct {
 }
 
 type EvolutionTrigger struct {
-	ID             uint16             `json:"id"`
-	Name           string             `json:"name"`
-	Names          []Name             `json:"names"`
+	API
 	PokemonSpecies []NamedAPIResource `json:"pokemon_species"`
+}
+
+func (c *EvolutionTrigger) Get(name string) error {
+	err := callAPI("evolution-trigger/", name, c)
+	return err
 }
 
 //GAMES
 
 type Generation struct {
-	ID             uint16             `json:"id"`
-	Name           string             `json:"name"`
+	API
 	Abilities      []NamedAPIResource `json:"abilities"`
-	Names          []Name             `json:"names"`
 	MainRegion     NamedAPIResource   `json:"main_region"`
 	Moves          []NamedAPIResource `json:"moves"`
 	PokemonSpecies []NamedAPIResource `json:"pokemon_species"`
@@ -283,17 +338,25 @@ type Generation struct {
 	VersionGroups  []NamedAPIResource `json:"version_groups"`
 }
 
+func (c *Generation) Get(name string) error {
+	err := callAPI("generation/", name, c)
+	return err
+}
+
 //POKEDEX
 
 type Pokedex struct {
-	ID             uint16             `json:"id"`
-	Name           string             `json:"name"`
+	API
 	IsMainSeries   bool               `json:"is_main_series"`
 	Descriptions   []Description      `json:"descriptions"`
-	Names          []Name             `json:"names"`
 	PokemonEntries []PokemonEntry     `json:"pokemon_entries"`
 	Region         NamedAPIResource   `json:"region"`
 	VersionGroups  []NamedAPIResource `json:"version_groups"`
+}
+
+func (c *Pokedex) Get(name string) error {
+	err := callAPI("pokedex/", name, c)
+	return err
 }
 
 type PokemonEntry struct {
@@ -304,15 +367,17 @@ type PokemonEntry struct {
 //VERSION
 
 type Version struct {
-	ID           uint16           `json:"id"`
-	Name         string           `json:"name"`
-	Names        []Name           `json:"names"`
+	API
 	VersionGroup NamedAPIResource `json:"version_group"`
 }
 
+func (c *Version) Get(name string) error {
+	err := callAPI("version/", name, c)
+	return err
+}
+
 type VersionGroup struct {
-	ID               uint16             `json:"id"`
-	Name             string             `json:"name"`
+	API
 	Order            uint16             `json:"order"`
 	Generation       NamedAPIResource   `json:"generation"`
 	MoveLearnMethods []NamedAPIResource `json:"move_learn_methods"`
@@ -321,11 +386,15 @@ type VersionGroup struct {
 	Versions         []NamedAPIResource `json:"versions"`
 }
 
+func (c *VersionGroup) Get(name string) error {
+	err := callAPI("version-group/", name, c)
+	return err
+}
+
 //ITEMS
 
 type Item struct {
-	ID                uint16                   `json:"id"`
-	Name              string                   `json:"name"`
+	API
 	Cost              uint                     `json:"cost"`
 	FlingPower        uint8                    `json:"fling_power"`
 	FlingEffect       NamedAPIResource         `json:"fling_effect"`
@@ -334,11 +403,15 @@ type Item struct {
 	EffectEntries     []VerboseEffect          `json:"effect_entries"`
 	FlavorTextEntries []VersionGroupFlavorText `json:"flavor_text_entries"`
 	GameIndices       []GenerationGameIndex    `json:"game_indices"`
-	Names             []Name                   `json:"names"`
 	Sprites           ItemSprites              `json:"sprites"`
 	HeldByPokemon     []ItemHolderPokemon      `json:"held_by_pokemon"`
 	BabyTriggerFor    APIResource              `json:"baby_trigger_for"`
 	Machines          []MachineVersionDetail   `json:"machines"`
+}
+
+func (c *Item) Get(name string) error {
+	err := callAPI("item/", name, c)
+	return err
 }
 
 type ItemSprites struct {
@@ -356,54 +429,73 @@ type ItemHolderPokemonVersionDetail struct {
 }
 
 type ItemAttribute struct {
-	ID           uint16             `json:"id"`
-	Name         string             `json:"name"`
+	API
 	Items        []NamedAPIResource `json:"items"`
-	Names        []Name             `json:"names"`
 	Descriptions []Description      `json:"descriptions"`
 }
 
+func (c *ItemAttribute) Get(name string) error {
+	err := callAPI("item-attribute/", name, c)
+	return err
+}
+
 type ItemCategory struct {
-	ID     uint16             `json:"id"`
-	Name   string             `json:"name"`
+	API
 	Items  []NamedAPIResource `json:"items"`
-	Names  []Name             `json:"names"`
 	Pocket NamedAPIResource   `json:"pocket"`
 }
 
+func (c *ItemCategory) Get(name string) error {
+	err := callAPI("item-category/", name, c)
+	return err
+}
+
 type ItemFlingEffect struct {
-	ID            uint16             `json:"id"`
-	Name          string             `json:"name"`
+	API
 	EffectEntries []Effect           `json:"effect_entries"`
 	Items         []NamedAPIResource `json:"items"`
 }
 
+func (c *ItemFlingEffect) Get(name string) error {
+	err := callAPI("item-fling-effect/", name, c)
+	return err
+}
+
 type ItemPocket struct {
-	ID         uint16             `json:"id"`
-	Name       string             `json:"name"`
+	API
 	Categories []NamedAPIResource `json:"categories"`
-	Names      []Name             `json:"names"`
+}
+
+func (c *ItemPocket) Get(name string) error {
+	err := callAPI("item-pocket/", name, c)
+	return err
 }
 
 //LOCATION
 
 type Location struct {
-	ID          uint16                `json:"id"`
-	Name        string                `json:"name"`
+	API
 	Region      NamedAPIResource      `json:"region"`
-	Names       []Name                `json:"names"`
 	GameIndices []GenerationGameIndex `json:"game_indices"`
 	Areas       []NamedAPIResource    `json:"areas"`
 }
 
+func (c *Location) Get(name string) error {
+	err := callAPI("location/", name, c)
+	return err
+}
+
 type LocationArea struct {
-	ID                   uint16                `json:"id"`
-	Name                 string                `json:"name"`
+	API
 	GameIndex            uint16                `json:"game_index"`
 	EncounterMethodRates []EncounterMethodRate `json:"encounter_method_rates"`
 	Location             NamedAPIResource      `json:"location"`
-	Names                []Name                `json:"names"`
 	PokemonEncounters    []PokemonEncounter    `json:"pokemon_encounters"`
+}
+
+func (c *LocationArea) Get(name string) error {
+	err := callAPI("location-area/", name, c)
+	return err
 }
 
 type EncounterMethodRate struct {
@@ -422,10 +514,13 @@ type PokemonEncounter struct {
 }
 
 type PalParkArea struct {
-	ID                uint16                    `json:"id"`
-	Name              string                    `json:"name"`
-	Names             []Name                    `json:"names"`
+	API
 	PokemonEncounters []PalParkEncounterSpecies `json:"pokemon_encounters"`
+}
+
+func (c *PalParkArea) Get(name string) error {
+	err := callAPI("pal-park-area/", name, c)
+	return err
 }
 
 type PalParkEncounterSpecies struct {
@@ -435,29 +530,36 @@ type PalParkEncounterSpecies struct {
 }
 
 type Region struct {
-	ID             uint16             `json:"id"`
+	API
 	Locations      []NamedAPIResource `json:"locations"`
-	Name           string             `json:"name"`
-	Names          []Name             `json:"names"`
 	MainGeneration NamedAPIResource   `json:"main_generation"`
 	Pokedexes      []NamedAPIResource `json:"pokedexes"`
 	VersionGroup   []NamedAPIResource `json:"version_group"`
 }
 
+func (c *Region) Get(name string) error {
+	err := callAPI("region/", name, c)
+	return err
+}
+
 //MACHINE
 
 type Machine struct {
-	ID           uint16           `json:"id"`
+	API
 	Item         NamedAPIResource `json:"item"`
 	Move         NamedAPIResource `json:"move"`
 	VersionGroup NamedAPIResource `json:"version_group"`
 }
 
+func (c *Machine) Get(ID string) error {
+	err := callAPI("machine/", ID, c)
+	return err
+}
+
 //MOVES
 
 type Move struct {
-	ID                 uint16                 `json:"id"`
-	Name               string                 `json:"name"`
+	API
 	Accuracy           uint8                  `json:"accuracy"`
 	EffectChance       uint8                  `json:"effect_chance"`
 	PP                 uint8                  `json:"pp"`
@@ -473,12 +575,16 @@ type Move struct {
 	Generation         NamedAPIResource       `json:"generation"`
 	Machines           []MachineVersionDetail `json:"machines"`
 	Meta               MoveMetaData           `json:"meta"`
-	Names              []Name                 `json:"names"`
 	PastValues         []PastMoveStatValues   `json:"past_values"`
 	StatChanges        []MoveStatChange       `json:"stat_changes"`
 	SuperContestEffect APIResource            `json:"super_contest_effect"`
 	Target             NamedAPIResource       `json:"target"`
 	Type               NamedAPIResource       `json:"type"`
+}
+
+func (c *Move) Get(name string) error {
+	err := callAPI("move/", name, c)
+	return err
 }
 
 type ContestComboSets struct {
@@ -528,47 +634,66 @@ type PastMoveStatValues struct {
 }
 
 type MoveAilment struct {
-	ID    uint16             `json:"is"`
-	Name  string             `json:"name"`
+	API
 	Moves []NamedAPIResource `json:"moves"`
-	Names []Name             `json:"names"`
+}
+
+func (c *MoveAilment) Get(name string) error {
+	err := callAPI("move-ailment/", name, c)
+	return err
 }
 
 type MoveBattleStyle struct {
-	ID    uint16 `json:"id"`
-	Name  string `json:"name"`
-	Names []Name `json:"names"`
+	API
+}
+
+func (c *MoveBattleStyle) Get(name string) error {
+	err := callAPI("move-battle-style/", name, c)
+	return err
 }
 
 type MoveCategory struct {
-	ID           uint16             `json:"id"`
-	Name         string             `json:"name"`
+	API
 	Moves        []NamedAPIResource `json:"moves"`
 	Descriptions []Description      `json:"descriptions"`
+}
+
+func (c *MoveCategory) Get(name string) error {
+	err := callAPI("move-category/", name, c)
+	return err
 }
 
 type MoveDamageClass struct {
-	ID           uint16             `json:"id"`
-	Name         string             `json:"name"`
+	API
 	Descriptions []Description      `json:"descriptions"`
 	Moves        []NamedAPIResource `json:"moves"`
-	Names        []Name             `json:"names"`
+}
+
+func (c *MoveDamageClass) Get(name string) error {
+	err := callAPI("move-damage-class/", name, c)
+	return err
 }
 
 type MoveLearnMethod struct {
-	ID            uint16             `json:"id"`
-	Name          string             `json:"name"`
+	API
 	Descriptions  []Description      `json:"descriptions"`
-	Names         []Name             `json:"names"`
 	VersionGroups []NamedAPIResource `json:"version_groups"`
 }
 
+func (c *MoveLearnMethod) Get(name string) error {
+	err := callAPI("move-learn-method/", name, c)
+	return err
+}
+
 type MoveTarget struct {
-	ID           uint16             `json:"id"`
-	Name         string             `json:"name"`
+	API
 	Descriptions []Description      `json:"descriptions"`
 	Moves        []NamedAPIResource `json:"moves"`
-	Names        []Name             `json:"names"`
+}
+
+func (c *MoveTarget) Get(name string) error {
+	err := callAPI("move-target/", name, c)
+	return err
 }
 
 //POKEMON
@@ -598,15 +723,18 @@ type AbilityFlavorText struct {
 
 //Ability holds ability info regarding name, id, gen, pokemon, and more.
 type Ability struct {
-	ID                uint16                `json:"id"`
-	Name              string                `json:"name"`
+	API
 	IsMainSeries      bool                  `json:"is_main_series"`
 	Generation        NamedAPIResource      `json:"generation"`
-	Names             []Name                `json:"names"`
 	EffectEntries     []Effect              `json:"effect_entries"`
 	EffectChange      []AbilityEffectChange `json:"effect_change"`
 	FlavorTextEntries []AbilityFlavorText   `json:"flavor_text_entries"`
 	Pokemon           []AbilityPokemon      `json:"pokemon"`
+}
+
+func (c *Ability) Get(name string) error {
+	err := callAPI("ability/", name, c)
+	return err
 }
 
 //CHARACTERISTICS
@@ -614,9 +742,14 @@ type Ability struct {
 
 //Characteristic indicate which stat contains a Pokémon's highest IV. A Pokémon's Characteristic is determined by the remainder of its highest IV divided by 5 (gene_modulo). Check out Bulbapedia for greater detail.
 type Characteristic struct {
-	ID             uint16  `json:"id"`
+	API
 	GeneModulo     uint8   `json:"gene_modulo"`
 	PossibleValues []uint8 `json:"possible_values"`
+}
+
+func (c *Characteristic) Get(name string) error {
+	err := callAPI("characteristic/", name, c)
+	return err
 }
 
 //EGG GROUPS
@@ -624,10 +757,13 @@ type Characteristic struct {
 
 //EggGroup are categories which determine which Pokémon are able to interbreed. Pokémon may belong to either one or two Egg Groups. if - name - names - pokemonSpecies
 type EggGroup struct {
-	ID             uint16             `json:"id"`
-	Name           string             `json:"name"`
-	Names          []Name             `json:"names"`
+	API
 	PokemonSpecies []NamedAPIResource `json:"pokemon_species"`
+}
+
+func (c *EggGroup) Get(name string) error {
+	err := callAPI("egg-group/", name, c)
+	return err
 }
 
 //GENDERS
@@ -641,10 +777,14 @@ type PokemonSpeciesGender struct {
 
 //Gender holds details on pokemon gender | id - name - pokemonSpeciesDetails - requiredForEvolution
 type Gender struct {
-	ID                    uint16                 `json:"id"`
-	Name                  string                 `json:"name"`
+	API
 	PokemonSpeciesDetails []PokemonSpeciesGender `json:"pokemon_species_details"`
 	RequiredForEvolution  []NamedAPIResource     `json:"required_for_evolution"`
+}
+
+func (c *Gender) Get(name string) error {
+	err := callAPI("gender/", name, c)
+	return err
 }
 
 //GROWTH RATES
@@ -657,12 +797,16 @@ type GrowthRateExperienceLevel struct {
 }
 
 type GrowthRate struct {
-	ID             uint16                      `json:"id"`
-	Name           string                      `json:"name"`
+	API
 	Formula        string                      `json:"formula"`
 	Description    []Description               `json:"description"`
 	Levels         []GrowthRateExperienceLevel `json:"levels"`
 	PokemonSpecies []NamedAPIResource          `json:"pokemon_species"`
+}
+
+func (c *GrowthRate) Get(name string) error {
+	err := callAPI("growth-rate/", name, c)
+	return err
 }
 
 //NATURES
@@ -680,15 +824,18 @@ type MoveBattleStylePreference struct {
 }
 
 type Nature struct {
-	ID                         uint16                      `json:"id"`
-	Name                       string                      `json:"name"`
+	API
 	DecreasedStat              NamedAPIResource            `json:"decreased_stat"`
 	IncreasedStat              NamedAPIResource            `json:"increased_stat"`
 	HatesFlavor                NamedAPIResource            `json:"hates_flavor"`
 	LikesFlavor                NamedAPIResource            `json:"likes_flavor"`
 	PokeathlonStatChanges      []NatureStatChange          `json:"pokeathlon_stat_changes"`
 	MoveBattleStylePreferences []MoveBattleStylePreference `json:"move_battle_style_preference"`
-	Names                      []Name                      `json:"names"`
+}
+
+func (c *Nature) Get(name string) error {
+	err := callAPI("nature/", name, c)
+	return err
 }
 
 //POKEATHLON STATS
@@ -705,18 +852,20 @@ type NaturePokeathlonStatAffectSets struct {
 }
 
 type PokeathlonStat struct {
-	ID               uint16                         `json:"id"`
-	Name             string                         `json:"name"`
-	Names            []Name                         `json:"names"`
+	API
 	AffectingNatures NaturePokeathlonStatAffectSets `json:"affecting_natures"`
+}
+
+func (c *PokeathlonStat) Get(name string) error {
+	err := callAPI("pokeathlon-stat/", name, c)
+	return err
 }
 
 //POKEMON
 //GET /api/v2/pokemon/{id or name}/
 
 type Pokemon struct {
-	ID                     uint16             `json:"id"`
-	Name                   string             `json:"name"`
+	API
 	BaseExperience         uint16             `json:"base_experience"`
 	Height                 uint16             `json:"height"`
 	IsDefault              bool               `json:"is_default"`
@@ -732,6 +881,11 @@ type Pokemon struct {
 	Species                NamedAPIResource   `json:"species"`
 	Stats                  []PokemonStat      `json:"stats"`
 	Types                  []PokemonType      `json:"types"`
+}
+
+func (c *Pokemon) Get(name string) error {
+	err := callAPI("pokemon/", name, c)
+	return err
 }
 
 type PokemonAbility struct {
@@ -792,18 +946,20 @@ type LocationAreaEncounter struct {
 //GET /api/v2/pokemon-color/{id or name}/
 
 type PokemonColor struct {
-	ID             uint16             `json:"id"`
-	Name           string             `json:"name"`
-	Names          []Name             `json:"names"`
+	API
 	PokemonSpecies []NamedAPIResource `json:"pokemon_species"`
+}
+
+func (c *PokemonColor) Get(name string) error {
+	err := callAPI("pokemon-color/", name, c)
+	return err
 }
 
 //POKEMON FORMS
 //GET /api/v2/pokemon-form/{id or name}/
 
 type PokemonForm struct {
-	ID           uint16             `json:"is"`
-	Name         string             `json:"name"`
+	API
 	Order        uint16             `json:"order"`
 	FormOrder    uint16             `json:"form_order"`
 	IsDefault    bool               `json:"is_default"`
@@ -813,8 +969,12 @@ type PokemonForm struct {
 	Pokemon      NamedAPIResource   `json:"pokemon"`
 	Sprites      PokemonFormSprites `json:"sprites"`
 	VersionGroup NamedAPIResource   `json:"version_group"`
-	Names        []Name             `json:"names"`
 	FormNames    []Name             `json:"form_names"`
+}
+
+func (c *PokemonForm) Get(name string) error {
+	err := callAPI("pokemon-form/", name, c)
+	return err
 }
 
 type PokemonFormSprites struct {
@@ -828,21 +988,27 @@ type PokemonFormSprites struct {
 //GET /api/v2/pokemon-habitat/{id or name}/
 
 type PokemonHabitat struct {
-	ID             uint16           `json:"id"`
-	Name           string           `json:"name"`
-	Names          []Name           `json:"names"`
+	API
 	PokemonSpecies NamedAPIResource `json:"pokemon_species"`
+}
+
+func (c *PokemonHabitat) Get(name string) error {
+	err := callAPI("pokemon-habitat/", name, c)
+	return err
 }
 
 //POKEMON SHAPES
 //GET /api/v2/pokemon-shape/{id or name}/
 
 type PokemonShape struct {
-	ID             uint16           `json:"id"`
-	Name           string           `json:"name"`
+	API
 	AwesomeNames   []AwesomeName    `json:"awesome_names"`
-	Names          []Name           `json:"names"`
 	PokemonSpecies []PokemonSpecies `json:"pokemon_species"`
+}
+
+func (c *PokemonShape) Get(name string) error {
+	err := callAPI("pokemon-shape/", name, c)
+	return err
 }
 
 type AwesomeName struct {
@@ -854,8 +1020,7 @@ type AwesomeName struct {
 //GET /api/v2/pokemon-species/{id or name}/
 
 type PokemonSpecies struct {
-	ID                   uint16                   `json:"id"`
-	Name                 string                   `json:"name"`
+	API
 	Order                uint16                   `json:"order"`
 	GenderRate           uint16                   `json:"gender_rate"`
 	CaptureRate          uint8                    `json:"capture_rate"`
@@ -873,12 +1038,16 @@ type PokemonSpecies struct {
 	EvolutionChain       APIResource              `json:"evolution_chain"`
 	Habitat              NamedAPIResource         `json:"habitat"`
 	Generation           NamedAPIResource         `json:"generation"`
-	Names                []Name                   `json:"names"`
 	PalParkEncounters    []PalParkEncounterArea   `json:"pal_park_encounters"`
 	FlavorTextEntries    []FlavorText             `json:"flavor_text_entries"`
 	FormDescription      []Description            `json:"form_description"`
 	Genera               []Genus                  `json:"genera"`
 	Varieties            []PokemonSpeciesVariety  `json:"varieties"`
+}
+
+func (c *PokemonSpecies) Get(name string) error {
+	err := callAPI("pokemon-species/", name, c)
+	return err
 }
 
 type Genus struct {
@@ -906,15 +1075,18 @@ type PokemonSpeciesVariety struct {
 //GET /api/v2/stat/{id or name}/
 
 type Stat struct {
-	ID               uint8                `json:"id"`
-	Name             string               `json:"name"`
+	API
 	GameIndex        uint16               `json:"game_index"`
 	IsBattleOnly     bool                 `json:"is_battle_only"`
 	AffectingMoves   MoveStatAffectSets   `json:"affecting_moves"`
 	AffectingNatures NatureStatAffectSets `json:"affecting_natures"`
 	Characteristics  APIResource          `json:"characteristics"`
 	MoveDamageClass  NamedAPIResource     `json:"move_damage_class"`
-	Names            []Name               `json:"names"`
+}
+
+func (c *Stat) Get(name string) error {
+	err := callAPI("stat/", name, c)
+	return err
 }
 
 type MoveStatAffectSets struct {
@@ -935,15 +1107,18 @@ type NatureStatAffectSets struct {
 //GET /api/v2/type/{id or name}/
 //Type
 type Type struct {
-	ID              uint16                `json:"id"`
-	Name            string                `json:"name"`
+	API
 	DamageRelations TypeRelations         `json:"damage_relations"`
 	GameIndices     []GenerationGameIndex `json:"game_indices"`
 	Generation      NamedAPIResource      `json:"generation"`
 	MoveDamageClass NamedAPIResource      `json:"move_damage_class"`
-	Names           []Name                `json:"names"`
 	Pokemon         []TypePokemon         `json:"pokemon"`
 	Move            []NamedAPIResource    `json:"move"`
+}
+
+func (c *Type) Get(name string) error {
+	err := callAPI("type/", name, c)
+	return err
 }
 
 type TypePokemon struct {

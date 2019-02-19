@@ -52,7 +52,11 @@ if err != nil {
 
 //This will create a new variable of type Pokemon, and populate it with charmander data. 
 var coolMove Move 
-coolMove.Get("hyper-beam")
+moveErr := coolMove.Get("hyper-beam")
+
+if moveErr != nil {
+    panic("What's going on?!?!")
+}
 
 /*Both methods are viable, and which you choose to use depends on how you plan on using the data. Most structs contain a Get method, which allows you to override the data.*/ 
 ```

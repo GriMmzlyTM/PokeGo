@@ -6,12 +6,29 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
+func checkCache(pathPattern string) (bool, error) {
+
+	files, err := filepath.Glob(pathPattern)
+
+	if err != nil {
+		return false, err
+	}
+
+	if files == nil || len(files) == 0 {
+		return false, nil
+	}
+
+	return true, nil
+
+}
+
 //Check if the json file exists in the cache
 //If it exist, it returns the JSON string. Else, it returns an empty string.
-func checkCache(dir string, name string) (io.Reader, error) {
+func getCache(dir string, name string) (io.Reader, error) {
 
 	//EXAMPLE: CACHEDIR/pokemon/pikachu.json
 	fileDir := fmt.Sprintf("%s%s%s.json", ops.CacheDir, dir, name)

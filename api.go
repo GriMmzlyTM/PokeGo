@@ -38,8 +38,8 @@ func callAPI(dir string, name string, data interface{}) error {
 	var content io.Reader
 
 	if ops.Cache {
-		cont, cacheErr := checkCache(dir, name)
-
+		cont, cacheErr := getCache(dir, name)
+		
 		if cacheErr != nil {
 			return cacheErr
 		}
