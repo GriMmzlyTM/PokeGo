@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestPokemon(t *testing.T) {
-	poke, pokeErr := pokego.Pokemon("Pikachu")
+	poke, pokeErr := pokego.GetPokemon("Pikachu")
 
 	if pokeErr != nil {
 		t.Error("pokego.Pokemon(\"Pikachu\") returned an error. Check options URL or JSON conversion.")
@@ -32,7 +32,7 @@ func TestPokemon(t *testing.T) {
 }
 
 func TestMove(t *testing.T) {
-	move, moveErr := pokego.Move("hyper-BeAm")
+	move, moveErr := pokego.GetMove("hyper-BeAm")
 
 	if moveErr != nil {
 		t.Error("pokego.Move(\"hyper-BeAm\") returned an error. Check options URL or JSON conversion.")
@@ -44,10 +44,14 @@ func TestMove(t *testing.T) {
 
 func TestVersion(t *testing.T) {
 
-	_, versionErr := pokego.Version("silver")
+	_, versionErr := pokego.GetVersion("silver")
 
 	if versionErr != nil {
 		t.Error("Could not get version. Check options or Json")
 	}
+
+}
+
+func TestBerry(t *testing.T) {
 
 }
