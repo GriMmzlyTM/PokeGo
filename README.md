@@ -50,7 +50,7 @@ if err != nil {
     panic("Something went wrong!!")
 }
 
-//This will create a new variable of type Pokemon, and populate it with charmander data. 
+//This will create a new variable of type Move, and populate it with hyper-beam data. 
 var coolMove Move 
 moveErr := coolMove.Get("hyper-beam")
 
@@ -58,7 +58,8 @@ if moveErr != nil {
     panic("What's going on?!?!")
 }
 
-/*Both methods are viable, and which you choose to use depends on how you plan on using the data. Most structs contain a Get method, which allows you to override the data.*/ 
+/*Both methods are viable, and which you choose to use depends on how you plan on using the data. 
+Most structs contain a Get method, which allows you to override the data.*/ 
 ```
 
 Once you have populated your struct, you can access the data as you normally would
